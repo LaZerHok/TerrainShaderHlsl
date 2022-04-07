@@ -1,0 +1,170 @@
+#include "Assets/Engine/Shaders/Deferred/GBufferStructs.hlsli"
+#include "Assets/Engine/Shaders/Common.hlsli"
+
+Texture2D albedoTextureBase : register(t1);
+Texture2D albedoTexture01 : register(t2);
+Texture2D albedoTexture02 : register(t3);
+Texture2D albedoTexture03 : register(t4);
+Texture2D albedoTexture04 : register(t5);
+//Texture2D albedoTexture05 : register(t6);
+//Texture2D albedoTexture06 : register(t7);
+
+/*
+Texture2D normalTexture01 : register(t8);
+Texture2D normalTexture02 : register(t9);
+Texture2D normalTexture03 : register(t10);
+Texture2D normalTexture04 : register(t11);
+//Texture2D normalTexture05 : register(t12);
+//Texture2D normalTexture06 : register(t13);
+Texture2D normalTextureBase : register(t14);
+
+Texture2D materialTexture01 : register(t15);
+Texture2D materialTexture02 : register(t16);
+Texture2D materialTexture03 : register(t17);
+Texture2D materialTexture04 : register(t18);
+//Texture2D materialTexture05 : register(t19);
+//Texture2D materialTexture06 : register(t20);
+Texture2D materialTextureBase : register(t21);
+*/
+
+GBufferOutput main(VertexToPixel input) 
+{
+
+	///////////////////////////Write shader below///////////////////////////
+
+	//Custom values
+	float Tiling = 3;
+	float TextureSize = 512.0;
+
+
+	//UV by World position
+	float2 Uv = (input.myWorldPosition.xz / TextureSize) * Tiling;
+
+
+	//---------ALBEDO---------
+
+		//RGB_1 Albedo
+	float3 AlbedoTexture01 = (albedoTexture01.Sample(defaultSampler, Uv).rgb) * input.myVXColor.r;
+	float3 AlbedoTexture02 = (albedoTexture02.Sample(defaultSampler, Uv).rgb) * input.myVXColor.g;
+	float3 AlbedoTexture03 = (albedoTexture03.Sample(defaultSampler, Uv).rgb) * input.myVXColor.b;
+
+	float3 Albedo_RGB_1_Result = (AlbedoTexture01 + AlbedoTexture02 + AlbedoTexture03) * input.myVXColor.a;
+
+	//RGB_2 Albedo
+	//float3 AlbedoTexture04 = (albedoTexture04.Sample(defaultSampler, Uv).rgb) * input.myVXColor.r;
+	//float3 AlbedoTexture05 = (albedoTexture05.Sample(defaultSampler, Uv).rgb) * input.myVXColor.g;
+	//float3 AlbedoTexture06 = (albedoTexture06.Sample(defaultSampler, Uv).rgb) * input.myVXColor.b;
+
+	//float3 Albedo_RGB_2_Result = saturate(AlbedoTexture04) * (1-input.myVXColor.a);
+
+	//Base Albedo (replaces black areas on vertex color with sampled texture)
+	float3 AlbedoTextureBase = (albedoTextureBase.Sample(defaultSampler, Uv).rgb) * (1 - saturate(input.myVXColor.r + input.myVXColor.g + input.myVXColor.b));
+
+
+
+
+	/*
+	//----------NORMAL---------
+
+		//RGB_1 Normal
+		float3 NormalTexture01 = (normalTexture01.Sample(defaultSampler, Uv).rgb) * input.myVXColor.r;
+		float3 NormalTexture02 = (normalTexture02.Sample(defaultSampler, Uv).rgb) * input.myVXColor.g;
+		float3 NormalTexture03 = (normalTexture03.Sample(defaultSampler, Uv).rgb) * input.myVXColor.b;
+
+		float3 Normal_1_Result = saturate(NormalTexture01 + NormalTexture04 + NormalTexture03) * input.myVXColor.a;
+
+		//RGB_2 Normal
+		float3 NormalTexture04 = GammaToLinear(normalTexture04.Sample(defaultSampler, Uv).rgb) * input.myVXColor.r;
+		//float3 NormalTexture05 = GammaToLinear(normalTexture05.Sample(defaultSampler, Uv).rgb) * input.myVXColor.g;
+		//float3 NormalTexture06 = GammaToLinear(normalTexture06.Sample(defaultSampler, Uv).rgb) * input.myVXColor.b;
+
+		float3 Normal_2_Result = saturate(NormalTexture04 + NormalTexture05 + NormalTexture06) * (1-input.myVXColor.a);
+
+		//Base Normal (replaces black areas on vertex color with sampled texture)
+		float3 NormalBase = GammaToLinear(normalTextureBase.Sample(defaultSampler, Uv).rgb) * (1-input.myVXColor.rgb);
+
+		float3 Normal = Normal_1_Result + Normal_2_Result + NormalBase;
+
+		//Normal range etc.
+		float3 normal = Normal;  //yes, i know this is lazy
+		float ambientOcclusion = normal.b;
+
+		normal = normal * 2.0f - 1.0f;
+		normal.z = sqrt(1 - saturate(normal.x * normal.x + normal.y * normal.y));
+		normal = normalize(normal);
+
+		float3x3 TBN = float3x3(
+			normalize(input.myTangent.xyz),
+			normalize(input.myBinormal.xyz),
+			normalize(input.myNormal.xyz)
+		);
+
+		TBN = transpose(TBN);
+		float3 pixelNormal = normalize(mul(TBN, normal));
+
+	*/
+
+	/*
+
+	//---------Material---------
+
+		//RGB_1 Material
+		float3 MaterialTexture01 = GammaToLinear(materialTexture01.Sample(defaultSampler, Uv).rgb) * input.myVXColor.r;
+		float3 MaterialTexture02 = GammaToLinear(materialTexture02.Sample(defaultSampler, Uv).rgb) * input.myVXColor.g;
+		float3 MaterialTexture03 = GammaToLinear(materialTexture03.Sample(defaultSampler, Uv).rgb) * input.myVXColor.b;
+
+		float3 RGB_1_Result = saturate(MaterialTexture01 + MaterialTexture02 + MaterialTexture03) * input.myVXColor.a;
+
+		//RGB_2 Material
+		float3 Texture04 = GammaToLinear(materialTexture04.Sample(defaultSampler, Uv).rgb) * input.myVXColor.r;
+		//float3 Texture05 = GammaToLinear(materialTexture05.Sample(defaultSampler, Uv).rgb) * input.myVXColor.g;
+		//float3 Texture06 = GammaToLinear(materialTexture06.Sample(defaultSampler, Uv).rgb) * input.myVXColor.b;
+
+		float3 RGB_2_Result = saturate(MaterialTexture04 + MaterialTexture05 + MaterialTexture06) * (1-input.myVXColor.a);
+
+		//Base Material (replaces black areas on vertex color with sampled texture)
+		float3 MaterialTextureBase = GammaToLinear(materialTextureBase.Sample(defaultSampler, Uv).rgb) * (1-input.myVXColor.rgb);
+
+	*/
+
+	const float3 identityNormal = float3(0.5f,0.5f,1.0f);
+	float3 normal = identityNormal;
+	normal = normal * 2.0f - 1.0f;
+	normal.z = sqrt(1 - saturate(normal.x * normal.x + normal.y * normal.y));
+	normal = normalize(normal);
+
+	float3x3 TBN = float3x3(
+		normalize(input.myTangent.xyz),
+		normalize(input.myBinormal.xyz),
+		normalize(input.myNormal.xyz)
+	);
+
+	TBN = transpose(TBN);
+	float3 pixelNormal = normalize(mul(TBN, normal));
+
+
+
+
+
+	//OUTPUT
+	float3 Color = Albedo_RGB_1_Result + AlbedoTextureBase;
+	//float3 Color = input.myVXColor.rgb;
+	//float3 Material = RGB_1_Result + RGB_2_Result MaterialTextureBase;
+	//normal is below normal sampling
+
+	////////////////////////////////////////////////////////////////////////
+
+	GBufferOutput result;
+	result.myWorldPosition = input.myWorldPosition;
+	result.myAlbedo = float4(Color, 1.0);
+	//result.myNormal = float4(pixelNormal, 1.0f);
+	result.myNormal = float4(pixelNormal, 1.0f);
+	result.myVertexNormal = float4(input.myNormal.xyz, 1.0f);
+	//r= metal g= roughness b= emissive
+	result.myMaterial = float4(0.0f, 1.0f, 0.0f, 1.0f);
+	result.myDepth = input.myDepth;
+	result.myAmbientOcclusion = 0.5f;
+	result.myIsLit = 1;
+
+	return result;
+} 
